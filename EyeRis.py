@@ -172,7 +172,7 @@ def average_of_color(frame):
     
     #print(ave_left)
 
-    for x in range(44,49):
+    for x in range(45,50):
         for y in range(10,50):
             ave_right += frame[y,x]
     ave_right = int(ave_right/((5)*(50-10)))
