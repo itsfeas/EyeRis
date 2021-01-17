@@ -124,7 +124,7 @@ def trigger_track(reference_frame, frame, pause_frame, input_stopped, affirmatio
             keyboard.release(Key.media_play_pause)
             affirmation = [0]*3
         elif affirmation[1]>=4:
-            returned_val, input_stopped, calm = ("R", 61, 0)
+            returned_val, input_stopped, calm = ("R", 71, 0)
             
             if rmode == 'media':
                 keyboard.press(Key.media_previous)
@@ -172,7 +172,7 @@ def average_of_color(frame):
     
     #print(ave_left)
 
-    for x in range(45,50):
+    for x in range(44,49):
         for y in range(10,50):
             ave_right += frame[y,x]
     ave_right = int(ave_right/((5)*(50-10)))
