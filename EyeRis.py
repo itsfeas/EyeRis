@@ -2,7 +2,14 @@ import numpy as np
 import cv2
 import pynput
 from pynput.keyboard import Key, Controller
+from pynput import keyboard
 from time import sleep
+
+settings= open('settings.txt','r')
+sens = settings.readline().replace('\n',"")
+webc = settings.readline().replace('\n',"")
+rmode =settings.readline().replace('\n',"")
+
 
 def realtime(cam_no, show_feed):
     feed = cv2.VideoCapture(cam_no)
@@ -42,14 +49,17 @@ def realtime(cam_no, show_feed):
             #print("pause_frame updated")
         frame_no+=1
 
-        if input_stopped>0:
+        if input_stopped>1:
             input_stopped-=1
+        if input_stopped==1:
+            input_stopped-=1
+            print("cooldown complete")
 
         if show_feed==1:
-            cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('frame', (int(width),int(height)))
-            cv2.imshow('frame',output_frame)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.namedWindow('EyeRis',cv2.WINDOW_NORMAL)
+            cv2.resizeWindow('EyeRis', (int(width),int(height)))
+            cv2.imshow('EyeRis',output_frame)
+        if cv2.waitKey(1) & 0xFF == ord('e'):
             break
 
     feed.release()
@@ -77,16 +87,28 @@ def trigger_track(reference_frame, frame, pause_frame, input_stopped, affirmatio
     #print(calm, input_stopped, affirmation)
 
     if input_stopped==0:
+        
+        if sens == 'low':
+            abs_full = 70
+            abs_l = 20
+            abs_r = 20
+        elif sens == 'medium':
+            abs_full = 60
+            abs_l = 15
+            abs_r = 15
+        elif sens == 'high':
+            abs_full = 50
+            abs_l =10
+            abs_r = 10        
 
-
-        if abs(full_average(frame) - full_average(pause_frame))>60:
+        if abs(full_average(frame) - full_average(pause_frame))>abs_full:
             affirmation[2]+=1
             calm=0
-        elif (abs(l1 - l2))>10:
+        elif (abs(l1 - l2))>abs_l:
             affirmation[0]+=1
             calm=0
 
-        elif (abs(r1-r2))>10:
+        elif (abs(r1-r2))>abs_r:
             affirmation[1]+=1
             calm=0
         elif calm>=30:
@@ -95,28 +117,37 @@ def trigger_track(reference_frame, frame, pause_frame, input_stopped, affirmatio
             calm+=1
 
 
-        if affirmation[2]>=3:
+        if affirmation[2]>=3 and rmode == 'media':
             returned_val, input_stopped, calm = ("pause", 150, 0)
             print("paused")
             keyboard.press(Key.media_play_pause)
             keyboard.release(Key.media_play_pause)
             affirmation = [0]*3
         elif affirmation[1]>=4:
-            returned_val, input_stopped, calm = ("R", 71, 0)
-            keyboard.press(Key.media_previous)
-            keyboard.release(Key.media_previous)
-            #eyboard.press(Key.page_down)
-            #keyboard.release(Key.page_down)
+            returned_val, input_stopped, calm = ("R", 61, 0)
+            
+            if rmode == 'media':
+                keyboard.press(Key.media_previous)
+                keyboard.release(Key.media_previous)
+                print("reverse")
+            elif rmode == 'read':
+                keyboard.press(Key.page_down)
+                keyboard.release(Key.page_down)
+                print("page down")
 
-            print("activated right")
             affirmation = [0]*3
         elif affirmation[0]>=4:
             returned_val, input_stopped, calm = ("L", 71, 0)
-            print("activated left")
-            keyboard.press(Key.media_next)
-            keyboard.release(Key.media_next)
-            keyboard.press(Key.page_up)
-            keyboard.release(Key.page_up)
+            #print("activated left")
+
+            if rmode == 'media':
+                keyboard.press(Key.media_next)
+                keyboard.release(Key.media_next)
+                print("skip")
+            elif rmode == 'read':
+                keyboard.press(Key.page_up)
+                keyboard.release(Key.page_up)
+                print("page up")
             affirmation = [0]*3
 
     return(returned_val, input_stopped, affirmation, calm)
@@ -148,4 +179,4 @@ def average_of_color(frame):
     return(ave_left, ave_right)
 
 if __name__ == '__main__':
-    realtime(1, 1)
+    realtime(int(webc), 1)
